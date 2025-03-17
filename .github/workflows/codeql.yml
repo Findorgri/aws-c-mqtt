@@ -10,7 +10,7 @@ on:
 
 jobs:
   analyze:
-    name: Analyze Project and Dependencies
+    name: Analyze aws-c-mqtt (CMake Build)
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -35,35 +35,25 @@ jobs:
         echo "INSTALL_PATH=$INSTALL_PATH" >> $GITHUB_ENV
         mkdir -p "$INSTALL_PATH"
 
-    - name: Clone and build aws-lc
-      run: |
-        git clone https://github.com/awslabs/aws-lc.git
-        cmake -S aws-lc -B aws-lc/build -DCMAKE_INSTALL_PREFIX=$INSTALL_PATH
-        cmake --build aws-lc/build --target install
-
-    - name: Clone and build s2n-tls
-      run: |
-        git clone https://github.com/aws/s2n-tls.git
-        cmake -S s2n-tls -B s2n-tls/build -DCMAKE_INSTALL_PREFIX=$INSTALL_PATH -DCMAKE_PREFIX_PATH=$INSTALL_PATH
-        cmake --build s2n-tls/build --target install
-
     - name: Clone and build aws-c-common
       run: |
         git clone https://github.com/awslabs/aws-c-common.git
         cmake -S aws-c-common -B aws-c-common/build -DCMAKE_INSTALL_PREFIX=$INSTALL_PATH
         cmake --build aws-c-common/build --target install
 
-    - name: Clone and build aws-c-cal
-      run: |
-        git clone https://github.com/awslabs/aws-c-cal.git
-        cmake -S aws-c-cal -B aws-c-cal/build -DCMAKE_INSTALL_PREFIX=$INSTALL_PATH -DCMAKE_PREFIX_PATH=$INSTALL_PATH
-        cmake --build aws-c-cal/build --target install
-
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
         build-mode: manual
+
+    - name: Build aws-c-mqtt with CMake (Verbose)
+      run: |
+        git clone https://github.com/awslabs/aws-c-mqtt.git
+        mkdir -p aws-c-mqtt/build
+        cd aws-c-mqtt/build
+        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$INSTALL_PATH -DCMAKE_PREFIX_PATH=$INSTALL_PATH ..
+        cmake --build . --verbose --target install
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
